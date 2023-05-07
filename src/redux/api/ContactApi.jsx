@@ -5,36 +5,17 @@ export const ContactApi = createApi({
   baseQuery: fetchBaseQuery({
     baseUrl: "https://contact-app.mmsdev.site/api/v1",
   }),
-  tagTypes: ["contactApi"],
+  tagTypes: ["contentApi"],
   endpoints: (builder) => ({
-    register: builder.mutation({
-      query: (user) => ({
-        url: "/register",
-        method: "POST",
-        body: user,
+    getContact: builder.query({
+      query: (token) => ({
+        url: "/contact",
+        method: "GET",
+        headers: { authorization: `Bearer ${token}` }
       }),
-      invalidatesTags: ["contactApi"],
+      providesTags:['contentApi']
     }),
-    login: builder.mutation({
-      query: (user) => ({
-        url: "/login",
-        method: "POST",
-        body: user,
-      }),
-      invalidatesTags: ["contactApi"],
-    }),
-    getProfile: builder.query({
-      query: (token) => `/user-profile/${token}`,
-      providesTags:['contactApi']
-    }),
-    logOut:builder.mutation({
-      query:(id)=>({
-        url:`/user-logout/${id}`,
-        method:"POST",
-      }),
-      invalidatesTags:['contactApi']
-    })
   }),
 });
 
-export const { useRegisterMutation,useLoginMutation,useGetProfileQuery,useLogOutMutation }=ContactApi
+export const {useGetContactQuery} = ContactApi;

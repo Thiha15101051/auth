@@ -3,75 +3,73 @@ import React from "react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Link } from "react-router-dom";
-import { useLoginMutation } from "../redux/api/ContactApi";
+import { useLoginMutation } from "../redux/api/authApi";
 import { useDispatch } from "react-redux";
 import { setUserData } from "../redux/services/UserSlice";
+import { useForm } from "@mantine/form";
+import { Loader } from "@mantine/core";
 
 const Login = () => {
-  const dispatch=useDispatch();
-  const [Login]=useLoginMutation()
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [error,setError]=useState('');
   const nav=useNavigate();
-  const [error, setError] = useState("");
+  const dispatch = useDispatch();
+  const [Login,{isLoading}] = useLoginMutation();
+  const form = useForm({
+    initialValues: {
+      email: "",
+      password: "",
+    },
 
-  const LoginFormHandler=async(e)=>{
-    e.preventDefault();
-    console.log(email,password)
-    const user={email,password};
-    const {data}=await Login(user);
-
-    console.log(data)
-    if (data?.success) {
-      dispatch(setUserData(data
-        ))
-      setError('');
-      nav('/')
-    }else if(!data?.success){
-      setError('email and password are not correct!')
-      console.log(data?.success)
-    }
-  }
+    validate: {
+      email: (value) => (/^\S+@\S+$/.test(value) ? null : "Invalid email"),
+      password: (value) =>
+        value.length < 6 ? "password must have at least 6 letters" : null,
+    },
+  });
   return (
     <div className=" h-screen flex items-center justify-center">
       <form
-        onSubmit={LoginFormHandler}
-        className=" w-96 flex flex-col gap-4 shadow-lg p-10 rounded"
+        onSubmit={form.onSubmit(async (values) => {
+          const { data } = await Login(values);
+          if (data?.success) {
+            dispatch(setUserData(data));
+            setError("");
+            nav("/");
+          } else if (!data?.success) {
+            setError(data?.message);
+          }
+        })}
+        className=" w-96 flex flex-col gap-8 shadow-lg p-10 rounded"
       >
         <h1 className=" text-2xl text-center font-semibold text-sky-500">
           Login
         </h1>
         <TextInput
-          className="shadow-lg"
-          onChange={(e) => {
-            setEmail(e.target.value);
-          }}
-          value={email}
           placeholder="Enter your email . . ."
+          {...form.getInputProps("email")}
         />
         <PasswordInput
-          className="shadow-lg"
-          onChange={(e) => {
-            setPassword(e.target.value);
-          }}
-          value={password}
           placeholder="Enter your password"
+          {...form.getInputProps("password")}
         />
-        {error.length === 0 ? null : (
-          <p className=" my-0 text-sm text-red-600">{error}</p>
+        {error?.length === 0 ? null : (
+          <p className="text-sm text-red-600 text-center">{error}</p>
         )}
-        <div className=" flex items-center justify-around my-3">
+        <div className=" flex items-center justify-center">
           <p className=" text-gray-600">Not a member?</p>
           <Link to={"/register"}>
             <p className="text-sky-700 underline cursor-pointer">Sign up now</p>
           </Link>
         </div>
-        <div className=" text-center">
+        <div className="flex items-center justify-center">
           <button
+            disabled={isLoading}
             type="submit"
-            className="bg-sky-500 py-1 px-3 text-white rounded-lg shadow-lg"
+            className="bg-sky-500 py-1 px-3 text-white rounded-lg shadow-lg flex items-center gap-2"
           >
-            Sign in
+            Sign in{
+              isLoading===true ? <Loader color="white" size='xs'/>:null
+            }
           </button>
         </div>
       </form>
